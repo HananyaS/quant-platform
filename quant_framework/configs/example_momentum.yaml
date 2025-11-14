@@ -1,0 +1,31 @@
+# Example configuration for Momentum Strategy
+
+strategy:
+  name: "MomentumStrategy"
+  type: "momentum"
+  parameters:
+    short_window: 20
+    long_window: 50
+    use_ema: false
+
+data:
+  source: "yahoo"
+  symbol: "AAPL"
+  start_date: "2020-01-01"
+  end_date: "2024-01-01"
+  interval: "1d"
+
+backtest:
+  initial_capital: 100000
+  fee_perc: 0.001  # 0.1% transaction fee
+  slippage_perc: 0.0005  # 0.05% slippage
+  leverage: 1.0
+  position_size: 1.0
+  risk_free_rate: 0.02
+
+output:
+  save_results: true
+  output_dir: "results"
+  generate_plots: true
+  save_trades: true
+

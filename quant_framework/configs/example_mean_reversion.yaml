@@ -1,0 +1,31 @@
+# Example configuration for Mean Reversion Strategy
+
+strategy:
+  name: "MeanReversionStrategy"
+  type: "mean_reversion"
+  parameters:
+    window: 20
+    num_std: 2.0
+    exit_on_middle: true
+
+data:
+  source: "yahoo"
+  symbol: "SPY"
+  start_date: "2020-01-01"
+  end_date: "2024-01-01"
+  interval: "1d"
+
+backtest:
+  initial_capital: 100000
+  fee_perc: 0.001
+  slippage_perc: 0.0005
+  leverage: 1.0
+  position_size: 0.8  # Use 80% of capital
+  risk_free_rate: 0.02
+
+output:
+  save_results: true
+  output_dir: "results"
+  generate_plots: true
+  save_trades: true
+
