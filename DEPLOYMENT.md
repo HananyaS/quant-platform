@@ -2,6 +2,25 @@
 
 This guide covers deploying the Quantitative Trading Platform to various hosting services.
 
+## 🚨 Quick Fix: Build Errors on Streamlit Cloud
+
+**Getting "installer returned a non-zero exit code"?**
+
+👉 **Use the minimal requirements file (no PyTorch):**
+
+```bash
+cp requirements_minimal.txt requirements.txt
+git add requirements.txt
+git commit -m "Use minimal requirements for cloud"
+git push
+```
+
+This gives you all features **except** the Deep Learning tab.
+
+**Full troubleshooting guide:** See [STREAMLIT_CLOUD_TROUBLESHOOTING.md](STREAMLIT_CLOUD_TROUBLESHOOTING.md)
+
+---
+
 ## 📋 Table of Contents
 
 1. [Streamlit Cloud (Recommended)](#streamlit-cloud-recommended)

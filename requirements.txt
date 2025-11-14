@@ -1,119 +1,35 @@
-# Quantitative Trading Platform - Dependencies
+# Streamlit Cloud Optimized Requirements
+# Use this for deployment to avoid build timeouts
 # Last updated: November 2024
-# Python 3.9+ required
 
-# ============================================================================
-# CORE DEPENDENCIES (Required)
-# ============================================================================
-
-# Core Data & Computation
+# Core Dependencies
 numpy>=1.24.0,<2.0.0
 pandas>=2.0.0,<3.0.0
 scipy>=1.10.0
-
-# Market Data
 yfinance>=0.2.28
-
-# Configuration & Utilities
 PyYAML>=6.0
 python-dateutil>=2.8.0
-tqdm>=4.65.0                      # Progress bars
+tqdm>=4.65.0
 
-# ============================================================================
-# MACHINE LEARNING (Required for ML Models tab)
-# ============================================================================
-
-# Classical ML
+# Machine Learning (CPU-optimized)
 scikit-learn>=1.3.0
 xgboost>=1.7.0
 lightgbm>=4.0.0
-joblib>=1.3.0                     # Model serialization
+joblib>=1.3.0
 
-# Deep Learning (PyTorch)
+# PyTorch CPU-only (much smaller!)
+--index-url https://download.pytorch.org/whl/cpu
 torch>=2.0.0
 torchvision>=0.15.0
 
-# ============================================================================
-# VISUALIZATION (Required)
-# ============================================================================
-
+# Visualization
 matplotlib>=3.7.0
 seaborn>=0.12.0
 plotly>=5.14.0
 
-# ============================================================================
-# WEB INTERFACE (Required for Streamlit app)
-# ============================================================================
-
+# Web Interface
 streamlit>=1.28.0
 
-# ============================================================================
-# TESTING (Optional - for developers)
-# ============================================================================
-
+# Testing (optional)
 pytest>=7.3.0
 pytest-cov>=4.1.0
-
-# ============================================================================
-# OPTIONAL DEPENDENCIES
-# ============================================================================
-
-# Live Trading Brokers (install as needed)
-# ------------------------------------------
-# alpaca-trade-api>=3.0.0         # Alpaca trading integration
-# ib_insync>=0.9.86               # Interactive Brokers
-# python-binance>=1.0.19          # Binance (crypto)
-
-# Advanced ML/DL
-# ------------------------------------------
-# tensorflow>=2.13.0              # TensorFlow (alternative to PyTorch)
-# shap>=0.42.0                    # Feature importance analysis (SHAP values)
-# optuna>=3.3.0                   # Hyperparameter optimization
-
-# Advanced Analytics
-# ------------------------------------------
-# statsmodels>=0.14.0             # Statistical models (ARIMA, GARCH, etc.)
-# arch>=6.0.0                     # Volatility models (GARCH family)
-# pyfolio>=0.9.2                  # Portfolio performance analysis
-# ta-lib>=0.4.28                  # TA-Lib technical indicators (requires binary install)
-
-# Database Support
-# ------------------------------------------
-# sqlalchemy>=2.0.0               # SQL databases
-# pymongo>=4.4.0                  # MongoDB
-# redis>=4.6.0                    # Redis (caching)
-
-# Advanced Dashboards
-# ------------------------------------------
-# dash>=2.11.0                    # Plotly Dash (alternative UI)
-# panel>=1.2.0                    # Panel dashboards
-
-# Development Tools
-# ------------------------------------------
-# black>=23.3.0                   # Code formatting
-# flake8>=6.0.0                   # Linting
-# mypy>=1.3.0                     # Type checking
-# ipython>=8.14.0                 # Interactive Python shell
-# jupyter>=1.0.0                  # Jupyter notebooks
-
-# ============================================================================
-# INSTALLATION NOTES
-# ============================================================================
-#
-# Basic Installation:
-#   pip install -r requirements.txt
-#
-# PyTorch (GPU support):
-#   Visit https://pytorch.org for GPU-specific installation
-#   Example: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-#
-# TA-Lib (requires binary):
-#   Windows: Download from https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib
-#   Linux: sudo apt-get install ta-lib && pip install ta-lib
-#   Mac: brew install ta-lib && pip install ta-lib
-#
-# For Apple Silicon (M1/M2) Macs:
-#   Some packages may require different installation methods
-#   See: https://developer.apple.com/metal/pytorch/
-#
-
