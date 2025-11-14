@@ -3,6 +3,13 @@ Streamlit Quantitative Trading Platform - Main Application
 Modular architecture with separate tab modules for better maintainability.
 """
 
+# Add project root to Python path for cloud deployments
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.resolve()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 import streamlit as st
 import pandas as pd
 import numpy as np

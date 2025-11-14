@@ -83,7 +83,8 @@ temp_*.py
 fix_*.py
 
 # Streamlit
-.streamlit/
+.streamlit/secrets.toml
+.streamlit/credentials.toml
 
 # ML/DL Models
 *.pt

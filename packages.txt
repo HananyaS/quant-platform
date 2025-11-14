@@ -1,0 +1,8 @@
+# System-level packages for Streamlit Cloud deployment
+# This file is only needed for Streamlit Cloud hosting
+
+# No system packages required for basic functionality
+# Uncomment below if you install TA-Lib:
+# build-essential
+# wget
+
