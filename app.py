@@ -38,7 +38,6 @@ from app_tabs import (
     render_strategy_backtest_tab,
     render_compare_strategies_tab,
     render_ml_models_tab,
-    render_deep_learning_tab,
     render_optimization_tab,
     render_portfolio_tab,
     render_custom_strategy_tab
@@ -73,18 +72,18 @@ STRATEGIES = {
     "🎯 RSI": {
         "class": RSIStrategy,
         "params": {
-            "period": {"type": "number", "default": 14, "min": 5, "max": 30},
-            "oversold": {"type": "number", "default": 30, "min": 20, "max": 40},
-            "overbought": {"type": "number", "default": 70, "min": 60, "max": 80},
+            "rsi_window": {"type": "number", "default": 14, "min": 5, "max": 30},
+            "oversold_threshold": {"type": "number", "default": 30, "min": 20, "max": 40},
+            "overbought_threshold": {"type": "number", "default": 70, "min": 60, "max": 80},
             "allow_short": {"type": "checkbox", "default": False}
         }
     },
     "💫 MACD": {
         "class": MACDStrategy,
         "params": {
-            "fast": {"type": "number", "default": 12, "min": 5, "max": 20},
-            "slow": {"type": "number", "default": 26, "min": 20, "max": 50},
-            "signal": {"type": "number", "default": 9, "min": 5, "max": 15},
+            "fast_period": {"type": "number", "default": 12, "min": 5, "max": 20},
+            "slow_period": {"type": "number", "default": 26, "min": 20, "max": 50},
+            "signal_period": {"type": "number", "default": 9, "min": 5, "max": 15},
             "allow_short": {"type": "checkbox", "default": False}
         }
     },
@@ -106,17 +105,16 @@ STRATEGIES = {
     "🎲 Triple Moving Average": {
         "class": TripleMAStrategy,
         "params": {
-            "short_window": {"type": "number", "default": 10, "min": 5, "max": 30},
-            "medium_window": {"type": "number", "default": 20, "min": 15, "max": 50},
-            "long_window": {"type": "number", "default": 50, "min": 30, "max": 100},
+            "fast_period": {"type": "number", "default": 10, "min": 5, "max": 30},
+            "medium_period": {"type": "number", "default": 20, "min": 15, "max": 50},
+            "slow_period": {"type": "number", "default": 50, "min": 30, "max": 100},
             "allow_short": {"type": "checkbox", "default": False}
         }
     },
     "📊 Stochastic Oscillator": {
         "class": StochasticStrategy,
         "params": {
-            "k_period": {"type": "number", "default": 14, "min": 5, "max": 30},
-            "d_period": {"type": "number", "default": 3, "min": 2, "max": 10},
+            "window": {"type": "number", "default": 14, "min": 5, "max": 30},
             "oversold": {"type": "number", "default": 20, "min": 10, "max": 30},
             "overbought": {"type": "number", "default": 80, "min": 70, "max": 90},
             "allow_short": {"type": "checkbox", "default": False}
@@ -190,7 +188,15 @@ with st.sidebar:
         use_fixed_trade_value = True
         position_size = 1.0
 
-    max_position_pct = st.slider("Max Position (%)", 0, 100, 95, 1) / 100
+    max_position_pct = st.slider("Max Position (%)", 0, 100, 100, 1) / 100
+
+    # Performance settings
+    st.markdown("### ⚡ Performance")
+    use_fast_backtester = st.checkbox(
+        "Fast Mode (Recommended)",
+        value=True,
+        help="Use vectorized backtester for 10-50x faster execution. Disable for maximum accuracy."
+    )
 
     # Store config
     config = {
@@ -206,18 +212,19 @@ with st.sidebar:
         "position_size": position_size,
         "use_fixed_trade_value": use_fixed_trade_value,
         "fixed_trade_value": fixed_trade_value,
-        "max_position_pct": max_position_pct
+        "max_position_pct": max_position_pct,
+        "use_fast_backtester": use_fast_backtester
     }
 
 # Main tabs
 tabs = st.tabs([
     "🎯 Strategy Backtest",
+    "🔧 Custom Strategy",
     "⚖️ Compare Strategies",
-    "🤖 ML Models",
-    "🧠 Deep Learning",
+    "📊 Features & Labels",
+    "🚀 Train Models",
     "⚙️ Optimization",
-    "💼 Portfolio",
-    "🔧 Custom Strategy"
+    "💼 Portfolio"
 ])
 
 # Render each tab
@@ -225,20 +232,34 @@ with tabs[0]:
     render_strategy_backtest_tab(config, STRATEGIES)
 
 with tabs[1]:
-    render_compare_strategies_tab(config, STRATEGIES)
+    render_custom_strategy_tab(config, STRATEGIES)
 
 with tabs[2]:
-    render_ml_models_tab(config)
+    render_compare_strategies_tab(config, STRATEGIES)
 
 with tabs[3]:
-    render_deep_learning_tab(config)
+    st.header("📊 Features & Labels")
+    st.markdown("Create features for ML/DL training")
+    try:
+        from app_tabs.ml_models import _render_feature_creation_tab
+        _render_feature_creation_tab(config)
+    except ImportError as e:
+        st.warning("⚠️ Requires: `pip install scikit-learn xgboost lightgbm`")
+        st.code(str(e))
 
 with tabs[4]:
-    render_optimization_tab(config)
+    st.header("🚀 Train Models")
+    st.markdown("Train classical ML and deep learning models")
+    try:
+        from app_tabs.ml_models import _render_training_tab
+        _render_training_tab(config)
+    except ImportError as e:
+        st.warning("⚠️ Requires: `pip install scikit-learn xgboost lightgbm torch`")
+        st.code(str(e))
 
 with tabs[5]:
-    render_portfolio_tab(config)
+    render_optimization_tab(config)
 
 with tabs[6]:
-    render_custom_strategy_tab(config)
+    render_portfolio_tab(config)
 

@@ -10,7 +10,13 @@ A comprehensive, professional-grade Python platform for algorithmic trading that
 - **🧠 PyTorch Deep Learning** - LSTM, GRU, Transformer, CNN, and MLP architectures with full configurability
 - **📦 Modular Architecture** - Clean separation with `app_tabs/` module for better maintainability
 
-### 🔧 Improvements
+### ⚡ Performance Improvements (NEW!)
+- **🚀 10-50x Faster Backtesting** - Vectorized FastBacktester using NumPy optimizations
+- **💾 Smart Data Caching** - Yahoo Finance data cached for 1 hour (instant subsequent loads)
+- **📊 Progress Indicators** - Real-time feedback on data loading, signal generation, and backtesting
+- **🎯 Optimized Signal Generation** - Cached and efficient strategy calculations
+
+### 🔧 Other Improvements
 - **Default Parameters**: SPY ticker, $10,000 capital, 100% position sizing (retail-friendly defaults)
 - **Enhanced Visualization**: Complete signal charts showing entries, exits, and position shading
 - **Better Sample Retention**: Smart feature engineering preserves more data samples
@@ -629,6 +635,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 ## 📚 Documentation
 
 - **[START_HERE.md](START_HERE.md)** - Comprehensive quick start guide
+- **[PERFORMANCE_OPTIMIZATION.md](PERFORMANCE_OPTIMIZATION.md)** - ⚡ Performance guide (10-50x faster backtesting)
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Cloud deployment guide (Streamlit, Docker, AWS)
 - **[CRITICAL_BUGS_FIXED.md](CRITICAL_BUGS_FIXED.md)** - Major bug fixes
 - **[ALLOW_SHORT_GUIDE.md](ALLOW_SHORT_GUIDE.md)** - Long-only vs long-short
 - **[FEE_STRUCTURE_GUIDE.md](FEE_STRUCTURE_GUIDE.md)** - Fee calculation details

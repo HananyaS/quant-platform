@@ -13,6 +13,7 @@ from quant_framework.models.turtle_strategy import TurtleStrategy
 from quant_framework.models.triple_ma_strategy import TripleMAStrategy
 from quant_framework.models.stochastic_strategy import StochasticStrategy
 from quant_framework.models.fibonacci_strategy import FibonacciStrategy
+from quant_framework.models.custom_strategy import CustomStrategy
 
 __all__ = [
     "BaseStrategy",
@@ -28,5 +29,6 @@ __all__ = [
     "TripleMAStrategy",
     "StochasticStrategy",
     "FibonacciStrategy",
+    "CustomStrategy",
 ]
 

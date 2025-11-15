@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from quant_framework.data.loaders import YahooDataLoader
 from quant_framework.backtest.backtester import Backtester
+from quant_framework.backtest.fast_backtester import FastBacktester
 from quant_framework.infra import TradingPipeline
 
 
@@ -41,18 +42,30 @@ def render_strategy_params(strategy_name, strategies_dict):
     return params
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_cached_data(symbol, start_date, end_date):
+    """Load and cache market data."""
+    loader = YahooDataLoader(symbol, start_date, end_date)
+    return loader.get_data()
+
+
 def run_backtest(config, strategy_name, strategy_params, strategies_dict):
     """Run backtest and return results."""
     try:
-        # Load data
-        loader = YahooDataLoader(config["symbol"], config["start_date"], config["end_date"])
-
+        # Load data with caching
+        with st.spinner(f"📊 Loading {config['symbol']} data..."):
+            data = load_cached_data(config["symbol"], config["start_date"], config["end_date"])
+        
         # Create strategy
         strategy_class = strategies_dict[strategy_name]["class"]
         if strategy_params:
             strategy = strategy_class(**strategy_params)
         else:
             strategy = strategy_class()
+
+        # Generate signals
+        with st.spinner(f"🔄 Generating signals for {strategy_name}..."):
+            signals = strategy.generate_signals(data)
 
         # Override for Buy & Hold
         is_buy_hold = strategy_name == "📊 Buy & Hold (Baseline)"
@@ -63,8 +76,11 @@ def run_backtest(config, strategy_name, strategy_params, strategies_dict):
             position_size = config["position_size"]
             max_position_pct = config["max_position_pct"]
 
-        # Create backtester
-        backtester = Backtester(
+        # Choose backtester (Fast by default, ~10-50x faster)
+        use_fast = config.get("use_fast_backtester", True)
+        BacktesterClass = FastBacktester if use_fast else Backtester
+        
+        backtester = BacktesterClass(
             initial_capital=config["initial_capital"],
             fee_per_share=config.get("fee_per_share", 0.005),
             fee_minimum=config.get("fee_minimum", 1.0),
@@ -76,16 +92,15 @@ def run_backtest(config, strategy_name, strategy_params, strategies_dict):
             max_position_pct=max_position_pct
         )
 
-        # Run pipeline (includes data and signals in results)
-        pipeline = TradingPipeline(
-            data_loader=loader,
-            strategy=strategy,
-            backtester=backtester,
-            save_results=False
-        )
-
-        results = pipeline.run()
-
+        # Run backtest
+        mode_label = "⚡ Fast Mode" if use_fast else "🐢 Accurate Mode"
+        with st.spinner(f"{mode_label} - Running backtest simulation..."):
+            results = backtester.run(data, signals)
+        
+        # Add data and signals to results
+        results['data'] = data
+        results['signals'] = signals
+        
         return results, None
 
     except Exception as e:
@@ -140,113 +155,47 @@ def plot_drawdown(equity_curve):
 
 
 def plot_signals(data, signals, symbol):
-    """Plot price with ALL trading signals (entries, exits, transitions)."""
-    fig = make_subplots(
-        rows=2, cols=1,
-        row_heights=[0.7, 0.3],
-        subplot_titles=(f"{symbol} - Price with Trading Signals", "Signal Timeline"),
-        vertical_spacing=0.1,
-        shared_xaxes=True
-    )
-
-    # Get price data
+    """Plot price with trading signals (optimized)."""
+    # Downsample if too large
+    if len(data) > 1500:
+        step = max(1, len(data) // 1000)
+        data = data.iloc[::step].copy()
+        signals = signals.iloc[::step].copy()
+    
     price = data['close'] if 'close' in data.columns else data['Close']
-
-    # Plot price
+    
+    fig = go.Figure()
+    
+    # Price line
     fig.add_trace(go.Scatter(
-        x=data.index,
-        y=price,
-        mode='lines',
-        name='Price',
-        line=dict(color='gray', width=1.5),
-        showlegend=True
-    ), row=1, col=1)
-
-    # Detect signal changes (entries, exits, reversals)
-    signal_changes = signals.diff()
-
-    # Long ENTRIES (0 -> 1 or -1 -> 1)
-    long_entries = (signals == 1) & (signal_changes != 0)
-    if long_entries.any():
+        x=data.index, y=price,
+        mode='lines', name='Price',
+        line=dict(color='#2E86AB', width=2)
+    ))
+    
+    # Signal markers (only changes)
+    signal_changes = signals.diff().fillna(signals.iloc[0])
+    change_mask = signal_changes != 0
+    
+    if change_mask.any():
+        change_idx = data.index[change_mask]
+        change_prices = price[change_mask]
+        change_signals = signals[change_mask]
+        
+        colors = ['green' if s == 1 else 'red' if s == -1 else 'orange' for s in change_signals]
+        symbols = ['triangle-up' if s == 1 else 'triangle-down' if s == -1 else 'x' for s in change_signals]
+        
         fig.add_trace(go.Scatter(
-            x=data.index[long_entries],
-            y=price[long_entries],
-            mode='markers',
-            name='Long Entry',
-            marker=dict(color='green', size=12, symbol='triangle-up', line=dict(width=2, color='darkgreen')),
-            showlegend=True
-        ), row=1, col=1)
-
-    # Short ENTRIES (0 -> -1 or 1 -> -1)
-    short_entries = (signals == -1) & (signal_changes != 0)
-    if short_entries.any():
-        fig.add_trace(go.Scatter(
-            x=data.index[short_entries],
-            y=price[short_entries],
-            mode='markers',
-            name='Short Entry',
-            marker=dict(color='red', size=12, symbol='triangle-down', line=dict(width=2, color='darkred')),
-            showlegend=True
-        ), row=1, col=1)
-
-    # EXIT signals (any position -> 0)
-    exits = (signals == 0) & (signal_changes != 0)
-    if exits.any():
-        fig.add_trace(go.Scatter(
-            x=data.index[exits],
-            y=price[exits],
-            mode='markers',
-            name='Exit',
-            marker=dict(color='orange', size=10, symbol='x', line=dict(width=2, color='darkorange')),
-            showlegend=True
-        ), row=1, col=1)
-
-    # Position background shading
-    for i in range(len(signals) - 1):
-        if signals.iloc[i] == 1:  # Long position
-            fig.add_vrect(
-                x0=data.index[i], x1=data.index[i + 1],
-                fillcolor="green", opacity=0.1,
-                layer="below", line_width=0,
-                row=1, col=1
-            )
-        elif signals.iloc[i] == -1:  # Short position
-            fig.add_vrect(
-                x0=data.index[i], x1=data.index[i + 1],
-                fillcolor="red", opacity=0.1,
-                layer="below", line_width=0,
-                row=1, col=1
-            )
-
-    # Plot signal timeline (bar chart)
-    colors = ['red' if s < 0 else 'green' if s > 0 else 'lightgray' for s in signals]
-
-    fig.add_trace(go.Bar(
-        x=data.index,
-        y=signals,
-        marker_color=colors,
-        name='Signal',
-        showlegend=False,
-        hovertemplate='Date: %{x}<br>Signal: %{y}<br><extra></extra>'
-    ), row=2, col=1)
-
-    # Update layout
-    fig.update_xaxes(title_text="Date", row=2, col=1)
-    fig.update_yaxes(title_text="Price ($)", row=1, col=1)
-    fig.update_yaxes(title_text="Signal", row=2, col=1, tickvals=[-1, 0, 1],
-                     ticktext=['Short (-1)', 'Cash (0)', 'Long (+1)'])
-
+            x=change_idx, y=change_prices,
+            mode='markers', name='Signals',
+            marker=dict(color=colors, size=10, symbol=symbols)
+        ))
+    
     fig.update_layout(
-        hovermode='x unified',
-        height=800,
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
+        title=f"{symbol} - Trading Signals",
+        xaxis_title="Date", yaxis_title="Price ($)",
+        height=500, hovermode='x unified'
     )
-
+    
     return fig
 

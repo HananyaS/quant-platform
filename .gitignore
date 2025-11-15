@@ -56,7 +56,6 @@ outputs/
 *.html
 
 # Data
-data/
 *.h5
 *.hdf5
 *.db

@@ -14,11 +14,22 @@ def render_compare_strategies_tab(config, strategies_dict):
     st.header("⚖️ Compare Multiple Strategies")
 
     st.markdown("### Select Strategies to Compare")
+    
+    # Get available built-in strategies
     available_strategies = [k for k in strategies_dict.keys() if k != "📊 Buy & Hold (Baseline)"]
+    
+    # Add custom strategies if any
+    custom_strategies = []
+    if 'custom_strategies' in st.session_state and st.session_state['custom_strategies']:
+        custom_strategies = [f"🔧 {name}" for name in st.session_state['custom_strategies'].keys()]
+        st.info(f"💾 {len(custom_strategies)} custom strategy(ies) available for comparison")
+    
+    all_strategies = available_strategies + custom_strategies
+    
     selected_strategies = st.multiselect(
         "Strategies",
-        options=available_strategies,
-        default=available_strategies[:3]
+        options=all_strategies,
+        default=all_strategies[:3] if len(all_strategies) >= 3 else all_strategies
     )
 
     col1, col2 = st.columns(2)
@@ -41,13 +52,38 @@ def render_compare_strategies_tab(config, strategies_dict):
                 progress_bar = st.progress(0)
 
                 for i, strat_name in enumerate(strategies_to_compare):
-                    default_params = {k: v["default"] for k, v in strategies_dict[strat_name]["params"].items()}
-                    if "allow_short" in default_params:
-                        default_params["allow_short"] = allow_short_comparison
+                    # Check if it's a custom strategy
+                    if strat_name.startswith("🔧 "):
+                        # It's a custom strategy
+                        custom_name = strat_name[2:]  # Remove emoji prefix
+                        custom_config = st.session_state['custom_strategies'][custom_name]
+                        
+                        # Create custom strategy instance
+                        from quant_framework.models.custom_strategy import CustomStrategy
+                        strategy = CustomStrategy(
+                            name=custom_config['name'],
+                            indicators=custom_config['indicators'],
+                            entry_rules=custom_config['entry_rules'],
+                            exit_rules=custom_config['exit_rules'],
+                            entry_logic=custom_config['entry_logic'],
+                            exit_logic=custom_config['exit_logic'],
+                            allow_short=custom_config['allow_short']
+                        )
+                        
+                        # Run custom backtest
+                        from .custom_strategy import _run_custom_backtest
+                        results, error = _run_custom_backtest(config, strategy)
+                        if not error:
+                            comparison_results[strat_name] = results
+                    else:
+                        # Built-in strategy
+                        default_params = {k: v["default"] for k, v in strategies_dict[strat_name]["params"].items()}
+                        if "allow_short" in default_params:
+                            default_params["allow_short"] = allow_short_comparison
 
-                    results, error = run_backtest(config, strat_name, default_params, strategies_dict)
-                    if not error:
-                        comparison_results[strat_name] = results
+                        results, error = run_backtest(config, strat_name, default_params, strategies_dict)
+                        if not error:
+                            comparison_results[strat_name] = results
 
                     progress_bar.progress((i + 1) / len(strategies_to_compare))
 
